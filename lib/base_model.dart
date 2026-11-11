@@ -100,6 +100,7 @@ abstract class BaseModel<T extends Entry> extends ChangeNotifier{
         await worker.update(item);
         id = item.id;
       }
+      await loadData();
     }
 
     _screen = .List;

@@ -3,11 +3,11 @@ import 'package:flutter_book/notes/note_model.dart';
 import 'package:provider/provider.dart';
 
 class NoteList extends StatelessWidget {
-  const new({super.key});
+  const NoteList({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final model = context.watch<NoteModel>()..loadData();
+    final model = context.watch<NoteModel>();
     return Scaffold(
       body: model.entryList.isEmpty 
               ? const Center(child: Text('No Notes Available'),)

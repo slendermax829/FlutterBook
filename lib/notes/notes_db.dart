@@ -31,12 +31,14 @@ class NotesDbWorker extends SqfliteWorker<Note>{
   }
 
   @override
-  // TODO: implement fromMap
   Note fromMap(Map<String, dynamic> map){
     return Note(
       title: map['title'],
       description: map['description'],
-      color: Color(map['color'])
+      color: Color(map['color']),
+      type: NoteType.values.byName(map['type']),
+      remoteUrl: map['remoteUrl'],
+      localPath: map['localPath']
     );
   }
 
@@ -66,7 +68,10 @@ class NotesDbWorker extends SqfliteWorker<Note>{
       id INTEGER PRIMARY KEY,
       title TEXT,
       description TEXT,
-      color INTEGER
+      color INTEGER,
+      type TEXT NOT NULL,
+      remoteUrl TEXT,
+      localPath TEXT
     )''';
 
   @override
@@ -78,7 +83,10 @@ class NotesDbWorker extends SqfliteWorker<Note>{
       'id': note.id,
       'title': note.title,
       'description': note.description,
-      'color': note.colorInt
+      'color': note.colorInt,
+      'type': note.type.name,
+      'remoteUrl': note.remoteUrl,
+      'localPath': note.localPath
     };
   }
 

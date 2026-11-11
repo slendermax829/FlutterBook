@@ -57,7 +57,19 @@ class MyApp extends StatelessWidget {
         ),
         bottomSheetTheme: BottomSheetThemeData(
           backgroundColor: Colors.grey.withValues(alpha: .35),
-          
+        ),
+        dialogTheme: DialogThemeData(
+          titleTextStyle: TextStyle(color: Colors.white),
+          backgroundColor: Colors.grey.withValues(alpha: .35),
+        ),
+        radioTheme: RadioThemeData(
+          fillColor: WidgetStatePropertyAll(Colors.white)
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            iconColor: Colors.white,
+            foregroundColor: Colors.white,
+          )
         )
       ),
       home: const Menu()
