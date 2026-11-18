@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_book/calendar/calendar_model.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 class ReminderEntry extends StatefulWidget {
   const new({super.key});
@@ -39,9 +41,72 @@ class _ReminderEntryState extends State<ReminderEntry> {
     super.dispose();
   }
 
+  DateTime get _reminderDay => DateUtils.dateOnly(
+    context.read<CalendarModel>().entryBeingEdited?.date ?? DateTime.now(),
+  );
+
+  Future<void> _pickStartTime() async {
+    final initial = _selectedStartTime ?? DateTime.now();
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (picked == null || !mounted) return;
+    final day = _reminderDay;
+    setState(() {
+      _selectedStartTime = DateTime(day.year, day.month, day.day, picked.hour, picked.minute,);
+    });
+  }
+
+  Future<void> _pickEndDate() async {
+    final day = _reminderDay;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedEndDate ?? day,
+      firstDate: day,
+      lastDate: DateTime(2100),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _selectedEndDate = picked);
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    final model = context.read<CalendarModel>();
+    final reminder = model.entryBeingEdited!
+      ..title = _titleController.text
+      ..notes = _noteController.text
+      ..color = _selectedColor
+      ..startTime = _selectedStartTime
+      ..endDate = _selectedEndDate;
+    reminder.date ??= model.selectedDate;
+    await model.stopEntry(save: true);
+  }
+
+  Widget _pickerRow({
+    required IconData icon,
+    required String text,
+    required VoidCallback onPick,
+    required VoidCallback onClear,
+    required bool hasValue,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.white),
+      title: Text(text, style: const TextStyle(color: Colors.white)),
+      trailing: hasValue
+          ? IconButton(
+              icon: const Icon(Icons.clear, color: Colors.white),
+              onPressed: onClear,
+            )
+          : null,
+      onTap: onPick,
+    );
+  }
+  
   @override
   Widget build(BuildContext context) {
     final model = context.watch<CalendarModel>();
+  
     return Form(
       key: _formKey,
       child: Column(
@@ -104,6 +169,32 @@ class _ReminderEntryState extends State<ReminderEntry> {
                                   labelStyle: TextStyle(color: Colors.white),
                                 ),
                               ),
+                              const Divider(height: 1,),
+                              _pickerRow(
+                                icon: Icons.access_time,
+                                text: _selectedStartTime == null
+                                    ? 'No start time'
+                                    : 'Start: ${DateFormat('h:mm a').format(_selectedStartTime!)}',
+                                hasValue: _selectedStartTime != null,
+                                onPick: _pickStartTime,
+                                onClear: () => setState(() => _selectedStartTime = null),
+                              ),
+                              _pickerRow(
+                                icon: Icons.event,
+                                text: _selectedEndDate == null
+                                    ? 'No end date'
+                                    : 'Ends: ${DateFormat.yMMMd().format(_selectedEndDate!)}',
+                                hasValue: _selectedEndDate != null,
+                                onPick: _pickEndDate,
+                                onClear: () => setState(() => _selectedEndDate = null),
+                              ),
+                              const Divider(height: 1),
+                              ColorPicker(
+                                colorPickerWidth: 175,
+                                pickerAreaHeightPercent: 1.2,
+                                pickerColor: _selectedColor,
+                                onColorChanged: (value) => _selectedColor = value,
+                              ),
                             ],
                           ),
                         ),
@@ -127,11 +218,7 @@ class _ReminderEntryState extends State<ReminderEntry> {
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
-                  onPressed: () {
-                    if(_formKey.currentState!.validate()){
-                      //_confirmSave();
-                    }
-                  },
+                  onPressed: _save,
                   child: const Text('Save'),
                 ),
               ],
@@ -140,13 +227,5 @@ class _ReminderEntryState extends State<ReminderEntry> {
         ],
       ),
     );
-  }
-
-  Widget _buildTimeSelector(){
-    return Placeholder();
-  }
-
-  Widget _buildEndDateSelector(){
-    return Placeholder();
   }
 }

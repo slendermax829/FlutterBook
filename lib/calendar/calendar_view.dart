@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_book/calendar/calendar_model.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
+
+extension Completion on CalendarModel{
+  void toggleCompleted(CalendarReminder remider) async{
+    remider.isCompleted = !remider.isCompleted;
+    await worker.update(remider);
+    await loadData();
+  }
+}
 
 class CalendarViewer extends StatefulWidget {
   const new({super.key});
@@ -13,18 +22,16 @@ class CalendarViewer extends StatefulWidget {
 
 class _CalendarViewerState extends State<CalendarViewer> {
   final _calendarController = CalendarController();
-  late DateTime _selectedDate;
-
-  DateTime dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 
   String dateFormat(DateTime date) => DateFormat.yMMMd().format(date);
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = dateOnly(DateTime.now());
-    _calendarController.displayDate = _selectedDate;
-    _calendarController.selectedDate = _selectedDate;
+    final selected = context.read<CalendarModel>().selectedDate;
+
+    _calendarController.displayDate = selected;
+    _calendarController.selectedDate = selected;
   }
 
   @override
@@ -36,7 +43,7 @@ class _CalendarViewerState extends State<CalendarViewer> {
   void _onDateSelected(CalendarTapDetails details) {
     final date = details.date;
     if (date == null || details.targetElement != CalendarElement.calendarCell) return;
-    setState(() => _selectedDate = dateOnly(date));
+    context.read<CalendarModel>().selectDate(date); 
   }
 
   @override
@@ -83,6 +90,8 @@ class _CalendarViewerState extends State<CalendarViewer> {
 
   Widget _remindersPanel() {
     final model = context.watch<CalendarModel>();
+    final reminders = model.remindersForSelectedDate;
+
     return Material(
       color: Colors.grey.withValues(alpha: .2),
       borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -90,37 +99,79 @@ class _CalendarViewerState extends State<CalendarViewer> {
         children: [
           ListTile(
             title: Text(
-              dateFormat(_selectedDate),
+              dateFormat(model.selectedDate),
               style: const TextStyle(fontSize: 20),
             ),
             subtitle: const Text('Reminders'),
             trailing: IconButton(
               icon: const Icon(Icons.add),
               tooltip: 'Add new reminder',
-              onPressed: () => model.setEntry(CalendarReminder(reminderDate: _selectedDate)),
+              onPressed: () => model.setEntry(CalendarReminder(reminderDate: model.selectedDate)),
             ),
           ),
           const Divider(height: 1, color: Colors.white),
           Expanded(
-            child: model.remindersForSelectedDate.isEmpty
+            child: reminders.isEmpty
                     ? Center(child: const Text('No Reminders added for this day'))
                     : ListView.builder(
-                      itemCount: model.remindersForSelectedDate.length,
-                      itemBuilder:(context, index) {
-                        final reminder = model.remindersForSelectedDate[index];
-                        return Card(
-                          color: reminder.color?.withValues(alpha: .35),
-                          child: ListTile(
-                            leading: Icon(Icons.date_range_rounded),
-                            title: Text(reminder.title ?? ''),
-                            subtitle: Text('${reminder.isCompleted}'),
-                            onTap: () => debugPrint('Reviewing Reminder'),
-                          ),
-                        );
-                      },
+                      itemCount: reminders.length,
+                      itemBuilder:(context, index) =>
+                        _buildSlideableCard(reminders[index]),
                     ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSlideableCard(CalendarReminder reminder){
+    final model = context.read<CalendarModel>();
+    return Slidable(
+      key: ValueKey(reminder.id),
+      startActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        dismissible: DismissiblePane(
+          onDismissed: () => model.deleteEntry(reminder),
+        ),
+        children: [
+          SlidableAction(
+            onPressed: (context) {
+              
+            },
+            backgroundColor: const Color(0xFFFE4A49),
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Delete',
+          ),
+        ]
+      ),
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        children: [
+          SlidableAction(
+            onPressed: (_) => model.toggleCompleted(reminder),
+            backgroundColor: const Color(0xFF7BC043),
+            foregroundColor: Colors.white,
+            icon: reminder.isCompleted ? Icons.undo : Icons.check,
+            label: reminder.isCompleted ? 'Undo' : 'Complete',
+          ),
+        ]
+      ),
+      child: Card(
+        color: reminder.color?.withValues(alpha: .35),
+        child: ListTile(
+          leading: Icon(
+            reminder.isCompleted ? Icons.check_circle : Icons.date_range_rounded,
+          ),
+          title: Text(
+            reminder.title ?? '',
+            style: TextStyle(
+              decoration: reminder.isCompleted ? TextDecoration.lineThrough : null,
+            ),
+          ),
+          subtitle: Text(reminder.isCompleted ? 'Completed' : 'Not Completed'),
+          onTap: () => model.setEntry(reminder),
+        ),
       ),
     );
   }

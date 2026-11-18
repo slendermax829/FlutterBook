@@ -14,7 +14,7 @@ class Calendar extends StatelessWidget {
       index: model.screen,
       children: [
         CalendarViewer(),
-        ReminderEntry(),
+        ReminderEntry(key: ObjectKey(model.entryBeingEdited)),
       ],
     );
   }

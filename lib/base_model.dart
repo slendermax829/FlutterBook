@@ -258,4 +258,9 @@ abstract class BaseModel<T extends Entry> extends ChangeNotifier{
 
     return id;
   }
+
+  Future<void> deleteEntry(T entry) async{
+    await worker.delete(entry);
+    await loadData();
+  }
 }
