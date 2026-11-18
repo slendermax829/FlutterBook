@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_book/calendar/calendar_model.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 class CalendarViewer extends StatefulWidget {
@@ -80,6 +82,7 @@ class _CalendarViewerState extends State<CalendarViewer> {
   }
 
   Widget _remindersPanel() {
+    final model = context.watch<CalendarModel>();
     return Material(
       color: Colors.grey.withValues(alpha: .2),
       borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -94,13 +97,28 @@ class _CalendarViewerState extends State<CalendarViewer> {
             trailing: IconButton(
               icon: const Icon(Icons.add),
               tooltip: 'Add new reminder',
-              onPressed: () => debugPrint('adding new reminder'),
+              onPressed: () => model.setEntry(CalendarReminder(reminderDate: _selectedDate)),
             ),
           ),
           const Divider(height: 1, color: Colors.white),
-          // Placeholder until reminders are implemented.
-          const Expanded(
-            child: Center(child: Text('No Reminders Added yet')),
+          Expanded(
+            child: model.remindersForSelectedDate.isEmpty
+                    ? Center(child: const Text('No Reminders added for this day'))
+                    : ListView.builder(
+                      itemCount: model.remindersForSelectedDate.length,
+                      itemBuilder:(context, index) {
+                        final reminder = model.remindersForSelectedDate[index];
+                        return Card(
+                          color: reminder.color?.withValues(alpha: .35),
+                          child: ListTile(
+                            leading: Icon(Icons.date_range_rounded),
+                            title: Text(reminder.title ?? ''),
+                            subtitle: Text('${reminder.isCompleted}'),
+                            onTap: () => debugPrint('Reviewing Reminder'),
+                          ),
+                        );
+                      },
+                    ),
           ),
         ],
       ),

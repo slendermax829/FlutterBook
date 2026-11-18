@@ -1,3 +1,6 @@
 {
-    "cmake.sourceDirectory": "/Users/maxpacheco/Desktop/Flutter/flutter_book/linux"
+    "cmake.sourceDirectory": "/Users/maxpacheco/Desktop/Flutter/flutter_book/linux",
+    "cSpell.words": [
+        "AUTOINCREMENT"
+    ]
 }

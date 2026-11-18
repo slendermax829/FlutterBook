@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_book/calendar/calendar.dart';
 import 'package:flutter_book/calendar/calendar_view.dart';
 import 'package:flutter_book/notes/note.dart';
 import 'package:flutter_book/tasks/tasks.dart';
@@ -15,7 +16,7 @@ class Menu extends StatelessWidget {
 
   static const List<Widget> _views = [
     NoteView(),
-    CalendarViewer(),//Center(child: Text('Calendar'),),
+    Calendar(),//Center(child: Text('Calendar'),),
     TaskViewer(),
     Center(child: Text('Contacts'),),
   ];

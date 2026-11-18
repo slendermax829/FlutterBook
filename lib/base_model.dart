@@ -202,9 +202,12 @@ abstract class SqfliteWorker<T extends Entry> implements EntryDBWorker<T>{
     final dbPath = path.join(await getDatabasesPath(), _dbName);
     final database = await openDatabase(
       dbPath,
-      version: 1,  
+      version: 1,
+      onConfigure: (db) async{
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
     );
-
+    
     _db = database;
   }
 }
@@ -232,6 +235,7 @@ abstract class BaseModel<T extends Entry> extends ChangeNotifier{
   void setEntry(T entry){
     entryBeingEdited = entry;
     _screen = .Entry;
+    notifyListeners();
     loadData();
   }
 

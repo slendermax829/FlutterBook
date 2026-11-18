@@ -67,7 +67,7 @@ class NotesDbWorker extends SqfliteWorker<Note>{
   @override
   String get sqlTable => '''
     CREATE TABLE IF NOT EXISTS $tableName (
-      id INTEGER PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT,
       description TEXT,
       color INTEGER,

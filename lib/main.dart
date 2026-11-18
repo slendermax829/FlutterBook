@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_book/calendar/calendar_model.dart';
 import 'package:flutter_book/menu.dart';
 import 'package:flutter_book/notes/note_model.dart';
 import 'package:flutter_book/tasks/task_model.dart';
@@ -20,6 +21,7 @@ void main() async{
       providers: [
         ChangeNotifierProvider(create: (_) => NoteModel()),
         ChangeNotifierProvider(create: (_) => TaskModel()),
+        ChangeNotifierProvider(create: (_) => CalendarModel()),
       ],
       child: MyApp(),
     )
