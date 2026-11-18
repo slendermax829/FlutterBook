@@ -2,6 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_book/notes/note_model.dart';
 import 'package:provider/provider.dart';
 
+extension FilePlayer on NoteModel{
+  void playAudioFile(){
+
+  }
+
+  void playVideoFile(){
+    
+  }
+}
 class NoteList extends StatelessWidget {
   const NoteList({super.key});
 

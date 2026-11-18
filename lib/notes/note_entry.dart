@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dotted_border/dotted_border.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_book/base_model.dart';
 import 'package:flutter_book/notes/note_model.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
@@ -13,7 +16,7 @@ class NoteEntry extends StatefulWidget {
   State<NoteEntry> createState() => _NoteEntryState();
 }
 
-class _NoteEntryState extends State<NoteEntry> {
+class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -21,8 +24,6 @@ class _NoteEntryState extends State<NoteEntry> {
   
   NoteType? _noteType = NoteType.Content;
   Color _selectedColor = Colors.red;
-  File? _audioFile;
-  File? _videoFile;
 
   @override
   void initState() {
@@ -33,6 +34,7 @@ class _NoteEntryState extends State<NoteEntry> {
     _noteType = note?.type ?? .Content;
     _selectedColor = note?.color ?? Colors.red;
     _contentController.text = note?.content ?? '';
+    date = note?.date;
 
     super.initState();
   }
@@ -44,20 +46,52 @@ class _NoteEntryState extends State<NoteEntry> {
     super.dispose();
   }
 
-  void _confirmSave(){
-    final confirm = showDialog(
+  void _confirmSave() async{
+    final confirm = await showDialog<bool>(
       context: context, 
+      barrierDismissible: false,
       builder:(context){
         return AlertDialog(
           title: Text('Save Note?'),
+          titleTextStyle: TextStyle(fontSize: 24),
           content: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-
+              Text('Title: ${_titleController.text}'),
+              Text('Description: ${_descriptionController.text}'),
+              Text('Date: ${formattedDate ?? 'No Date Selected'}'),
+              _noteType == .Content
+                ? Text('Content: ${_contentController.text}')
+                : Text('${_noteType!.name} File: ${selectedFileName ?? 'No File Selected'}')
             ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Confirm'),
+            ),
+          ],
         );
       },
+    );
+
+    if(confirm ?? false){
+      _saveNote();
+    }
+  }
+
+  void _saveNote(){
+    //debugPrint('Saving Note');
+    final Note newNote = Note(
+      title: _titleController.text,
+      description: _descriptionController.text,
+      color: _selectedColor,
     );
   }
 
@@ -120,8 +154,10 @@ class _NoteEntryState extends State<NoteEntry> {
                                 labelStyle: TextStyle(color: Colors.white),
                               ),
                             ),
+                            _dateField(),
                             Divider(color: Colors.white,),
                             _noteTypeContent(),
+                            Divider(color: Colors.white,),
                             _insertContent(),
                             Divider(color: Colors.white,),
                             ColorPicker(
@@ -148,12 +184,15 @@ class _NoteEntryState extends State<NoteEntry> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () => model.stopEntry(save: false, notify: true),
+                  onPressed: () {
+                    resetFile();
+                    model.stopEntry(save: false, notify: true);
+                  },
                   child: const Text('Cancel'),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
-                  onPressed: () => debugPrint('saving new note'),
+                  onPressed: () => _confirmSave(),
                   child: const Text('Save'),
                 ),
               ],
@@ -164,12 +203,33 @@ class _NoteEntryState extends State<NoteEntry> {
     );
   }
 
+  Widget _dateField(){
+    return ListTile(
+      leading: const Icon(Icons.calendar_today, color: Colors.white),
+      title: Text(
+        formattedDate ?? 'No date selected',
+        style: const TextStyle(color: Colors.white),
+      ),
+      trailing: hasDate
+          ? IconButton(
+              icon: const Icon(Icons.clear, color: Colors.white),
+              onPressed: () => setState(() => date = null),
+            )
+          : null,
+      onTap: () async {
+        final picked = await pickDate(context);
+        if (picked != null && mounted) setState(() {});
+      },
+    );
+  }
+
   Widget _noteTypeContent(){
     return SafeArea(
       child: RadioGroup<NoteType>(
         groupValue: _noteType,
         onChanged:(NoteType? type) {
           setState(() {
+            resetFile();
             _noteType = type;
           });
         }, 
@@ -224,28 +284,54 @@ class _NoteEntryState extends State<NoteEntry> {
           ),
         );
       case NoteType.Audio:
-        return Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () => debugPrint('uploading audio file'), 
-                  icon: Icon(Icons.upload),
-                  label: Text('Upload Audio File'),
-                ),
-
-              ],
-            )
-        );
+        return _buildFileUploader(fileType: .Audio);
       case NoteType.Video:
-        return Padding(
-            padding: const EdgeInsets.all(10),
-            child: ElevatedButton.icon(
-              onPressed: () => debugPrint('uploading video file'), 
-              icon: Icon(Icons.upload),
-              label: Text('Upload Video File'),
-            )
-        );
+        return _buildFileUploader(fileType: .Video);
     }
+  }
+
+  Widget _buildFileUploader({required NoteType fileType}){
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      highlightColor: Colors.grey.withValues(alpha: .2),
+      splashColor: Colors.grey.withValues(alpha: .4),
+      onTap: () async {
+        final picked = fileType == .Audio
+            ? await pickAudioFile()
+            : await pickVideoFile();
+        if (picked && mounted) setState(() {});
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Column(
+          spacing: 20,
+          children: [
+            SizedBox(
+              width: .infinity,
+              child: DottedBorder(
+                options: RectDottedBorderOptions(
+                  color: Colors.white,
+                  dashPattern: [6,4],
+                  strokeWidth: 2,
+                  padding: EdgeInsets.all(20),
+                ),
+                child: Center(
+                  child: Column(
+                    spacing: 12,
+                    mainAxisAlignment: .center,
+                    children: [
+                      const Icon(Icons.upload, size: 46,),
+                      fileType == _noteType 
+                        ? Text(selectedFileName ?? 'Upload File Here')
+                        : Text('Upload File Here')
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

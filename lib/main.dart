@@ -60,7 +60,7 @@ class MyApp extends StatelessWidget {
         ),
         dialogTheme: DialogThemeData(
           titleTextStyle: TextStyle(color: Colors.white),
-          backgroundColor: Colors.grey.withValues(alpha: .35),
+          backgroundColor: Colors.grey,
         ),
         radioTheme: RadioThemeData(
           fillColor: WidgetStatePropertyAll(Colors.white)
@@ -70,6 +70,9 @@ class MyApp extends StatelessWidget {
             iconColor: Colors.white,
             foregroundColor: Colors.white,
           )
+        ),
+        datePickerTheme: DatePickerThemeData(
+          
         )
       ),
       home: const Menu()

@@ -71,7 +71,8 @@ class NotesDbWorker extends SqfliteWorker<Note>{
       color INTEGER,
       type TEXT NOT NULL,
       remoteUrl TEXT,
-      localPath TEXT
+      localPath TEXT,
+      date INTEGER
     )''';
 
   @override
@@ -86,7 +87,8 @@ class NotesDbWorker extends SqfliteWorker<Note>{
       'color': note.colorInt,
       'type': note.type.name,
       'remoteUrl': note.remoteUrl,
-      'localPath': note.localPath
+      'localPath': note.localPath,
+      'date' : note.dateInUnix
     };
   }
 

@@ -8,7 +8,7 @@ enum NoteType{
   Video;
 }
 
-class Note extends Entry{
+class Note extends Entry with DateMixin{
   String? title;
   String? description;
   Color? color;
@@ -25,8 +25,12 @@ class Note extends Entry{
     this.type = .Content,
     this.content,
     this.remoteUrl,
-    this.localPath
-  });
+    this.localPath,
+    int? dateUnix,
+    super.id,
+  }){
+    dateInUnix = dateUnix;
+  }
 
   int get colorInt{
     if(color == null){
