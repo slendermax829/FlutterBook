@@ -33,6 +33,8 @@ class NotesDbWorker extends SqfliteWorker<Note>{
   @override
   Note fromMap(Map<String, dynamic> map){
     return Note(
+      id: map['id'],
+      dateUnix: map['date'],
       title: map['title'],
       description: map['description'],
       color: Color(map['color']),

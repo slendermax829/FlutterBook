@@ -8,11 +8,17 @@ extension FilePlayer on NoteModel{
   }
 
   void playVideoFile(){
-    
+
   }
 }
 class NoteList extends StatelessWidget {
   const NoteList({super.key});
+
+  static const Map<String, Icon> _noteIcons = {
+    'content' : Icon(Icons.description),
+    'audio' : Icon(Icons.audio_file),
+    'video' : Icon(Icons.video_camera_back)
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +30,11 @@ class NoteList extends StatelessWidget {
                 itemCount: model.entriesLength,
                 itemBuilder:(context, index) {
                   final note = model.entryList[index];
+
                   return Card(
                     color: note.color?.withValues(alpha: .3),
                     child: ListTile(
-                      leading: Icon(Icons.note_rounded),
+                      leading: _noteIcons[note.type.name.toLowerCase()],
                       title: Text(note.title ?? ''),
                       subtitle: Text(note.description ?? ''),
                       onTap:() => debugPrint('Reviewing note ${note.title}'),

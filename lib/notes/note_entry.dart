@@ -16,7 +16,7 @@ class NoteEntry extends StatefulWidget {
   State<NoteEntry> createState() => _NoteEntryState();
 }
 
-class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin {
+class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, FireBaseUploader {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -86,13 +86,50 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin {
     }
   }
 
-  void _saveNote(){
-    //debugPrint('Saving Note');
-    final Note newNote = Note(
+  Future<void> _saveNote() async{
+    final model = context.read<NoteModel>();
+    final messenger = ScaffoldMessenger.of(context);
+    final existing = model.entryBeingEdited;
+    final isFileType = _noteType != NoteType.Content;
+
+    String? remoteUrl;
+    String? localPath;
+    if(isFileType){
+      // Keep the previous upload unless a new file was picked.
+      if(selectedFilePath != null){
+        try{
+          localPath = selectedFilePath;
+          remoteUrl = await uploadFile(
+            localPath!,
+            folder: _noteType!.name.toLowerCase(),
+          );
+        }catch(e){
+          debugPrint('Upload failed: $e');
+          messenger.showSnackBar(
+            const SnackBar(content: Text('File upload failed')),
+          );
+          return;
+        }
+      }else if(existing?.type == _noteType){
+        remoteUrl = existing?.remoteUrl;
+        localPath = existing?.localPath;
+      }
+    }
+
+    model.entryBeingEdited = Note(
+      id: existing?.id ?? Entry.noId,
       title: _titleController.text,
       description: _descriptionController.text,
       color: _selectedColor,
+      type: _noteType ?? NoteType.Content,
+      content: _noteType == NoteType.Content ? _contentController.text : null,
+      remoteUrl: remoteUrl,
+      localPath: localPath,
+      dateUnix: dateInUnix,
     );
+
+    resetFile();
+    await model.stopEntry(save: true);
   }
 
   @override
@@ -135,6 +172,12 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin {
                                 label: Text('Title'),
                                 labelStyle: TextStyle(color: Colors.white),
                               ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a title';
+                                }
+                                return null;
+                              },
                             ),
                             TextFormField(
                               controller: _descriptionController,
@@ -153,6 +196,12 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin {
                                 label: Text('Description'),
                                 labelStyle: TextStyle(color: Colors.white),
                               ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a description';
+                                }
+                                return null;
+                              },
                             ),
                             _dateField(),
                             Divider(color: Colors.white,),
@@ -192,7 +241,11 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin {
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
-                  onPressed: () => _confirmSave(),
+                  onPressed: () {
+                    if(_formKey.currentState!.validate()){
+                      _confirmSave();
+                    }
+                  },
                   child: const Text('Save'),
                 ),
               ],

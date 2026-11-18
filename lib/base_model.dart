@@ -1,9 +1,13 @@
+import 'dart:io';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
+import 'package:mime/mime.dart';
 
 enum Screen{
   List,
@@ -20,10 +24,83 @@ abstract class Entry{
   bool get isNew => id == noId;
 }
 
+mixin FireBaseUploader{
+  UploadTask? uploadTask;
+
+  /// Uploads the local file to Firebase Storage and returns its download URL.
+  Future<String> uploadFile(String localPath, {String folder = 'uploads'}) async{
+    final file = File(localPath);
+
+    debugPrint('Path of File: ${file.path}');
+
+    if(!await file.exists()){
+      throw Exception('Local file not found: $localPath');
+    }
+
+    final name = '${DateTime.now().millisecondsSinceEpoch}_${path.basename(localPath)}';
+
+    final ref = FirebaseStorage.instance
+      .ref()
+      .child(folder)
+      .child(name);
+
+    debugPrint('Bucket: ${ref.bucket}');
+    debugPrint('Full path: ${ref.fullPath}');
+    debugPrint('File size: ${await file.length()} bytes');
+    debugPrint('Uploading to bucket ${ref.bucket}, path ${ref.fullPath}');
+
+    try {
+      // Start upload
+      uploadTask = ref.putFile(
+        file,
+        SettableMetadata(
+          contentType: lookupMimeType(localPath) ?? 'application/octet-stream',
+        ),
+      );
+
+      // Wait for upload to finish
+      final snapshot = await uploadTask!;
+
+      debugPrint('Upload state: ${snapshot.state}');
+      debugPrint('Uploaded bytes: ${snapshot.bytesTransferred}');
+      debugPrint('Reference: ${snapshot.ref.fullPath}');
+
+      if (snapshot.state != TaskState.success) {
+        throw Exception(
+          'Upload did not complete: ${snapshot.state}',
+        );
+      }
+
+      debugPrint('Upload succeeded.');
+
+      // Get URL separately
+      try {
+        final url = await snapshot.ref.getDownloadURL();
+
+        debugPrint('Download URL: $url');
+
+        return url;
+      } on FirebaseException catch (e) {
+        debugPrint(
+          'getDownloadURL failed: ${e.code} - ${e.message}',
+        );
+        rethrow;
+      }
+    } on FirebaseException catch (e) {
+      debugPrint(
+        'Firebase upload failed: ${e.code} - ${e.message}',
+      );
+      rethrow;
+    }
+  }
+}
+
 mixin FileUploader{
   PlatformFile? _selectedFile;
 
   String? get selectedFileName => _selectedFile?.name;
+
+  String? get selectedFilePath => _selectedFile?.path;
 
   static const videoExtensions = ['mp4', 'avi', 'mov', 'mkv'];
   static const audioExtensions = ['mp3', 'wav', 'm4a', 'aac'];
@@ -100,8 +177,8 @@ abstract interface class EntryDBWorker<T extends Entry>{
 }
 
 abstract class SqfliteWorker<T extends Entry> implements EntryDBWorker<T>{
-  static const _dbName = 'flutterbook_db.db';
   static Database? _db;
+  static const _dbName = 'flutterbook_db.db';
 
   String get tableName;
   String get sqlTable;
