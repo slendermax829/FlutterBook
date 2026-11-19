@@ -90,11 +90,20 @@ class _CalculatorViewState extends State<CalculatorView> {
     };
 
     _display = result == null ? 'Error' : _formatResult(result);
-    _history.insert(
-      0,
-      '${_formatResult(leftValue)} $operator '
-      '${_formatResult(currentValue)} = $_display',
+    // _history.insert(
+    //   0,
+    //   '${_formatResult(leftValue)} $operator '
+    //   '${_formatResult(currentValue)} = $_display',
+    // );
+
+    final history = CalculationHistory(
+      expression: '${_formatResult(leftValue)} $operator ${_formatResult(currentValue)} =',
+      result: _display,
+      operationType: operator
     );
+
+    _saveHistory(history);
+
     _storedValue = result;
   }
 
@@ -171,8 +180,34 @@ class _CalculatorViewState extends State<CalculatorView> {
     _scaffoldKey.currentState?.openEndDrawer();
   }
 
-  void _clearHistory() {
-    setState(_history.clear);
+  Future<void> _saveHistory(CalculationHistory history) async {
+    final model = context.read<CalculatorModel>();
+    if (model.selectedCal == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select a calculator to save history.')),
+      );
+      return;
+    }
+
+    try {
+      await model.insertHistoryToSelected(history);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save history: $error')),
+      );
+    }
+  }
+
+  Future<void> _clearHistory(CalculatorModel model) async {
+    try {
+      await model.deleteHistoryFromSelected();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not clear history: $error')),
+      );
+    }
   }
 
   Future<void> _deleteCalculator(SavedCalculator calculator) async {
@@ -205,27 +240,42 @@ class _CalculatorViewState extends State<CalculatorView> {
                 ),
                 trailing: IconButton(
                   tooltip: 'Clear history',
-                  onPressed: _history.isEmpty ? null : _clearHistory,
+                  onPressed: selectedCal == null
+                      ? null
+                      : () => _clearHistory(model),
                   icon: const Icon(Icons.delete_outline),
                 ),
               ),
               const Divider(height: 1),
               Expanded(
-                child: FutureBuilder<List<CalculationHistory>>(
+                child: selectedCal == null
+                    ? const Center(
+                        child: Text('Select a calculator to view history'),
+                      )
+                    : FutureBuilder<List<CalculationHistory>>(
+                  key: ValueKey(selectedCal.id),
                   future: model.getCalculationHistoryFromSelected(),
                   builder: (context, snapshot) {
-                    final history = snapshot.data ?? const <CalculationHistory>[];
                     if (snapshot.connectionState == ConnectionState.waiting &&
                         !snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
                     }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Could not load history: ${snapshot.error}'));
+                    }
+                    final history = snapshot.data ?? const <CalculationHistory>[];
                     return history.isEmpty
                         ? const Center(child: Text('No calculations yet'))
                         : ListView.builder(
                             itemCount: history.length,
-                            itemBuilder: (context, index) => ListTile(
-                              title: Text(history[index].toString()),
-                            ),
+                            itemBuilder: (context, index) {
+                              final hist = history[index];
+
+                              return ListTile(
+                              title: Text(hist.expression ?? '?'),
+                              trailing: Text(hist.result ?? 'inf'),
+                            );
+                            },
                           );
                   },
                 ),

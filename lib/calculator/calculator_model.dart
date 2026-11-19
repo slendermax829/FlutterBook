@@ -86,7 +86,16 @@ class CalculatorModel extends BaseModel<SavedCalculator> {
       throw StateError('Save the calculator before adding history.');
     }
 
-    return _calculatorWorker.createHistory(calculator.id, entry);
+    int id = await _calculatorWorker.createHistory(calculator.id, entry);
+
+    await loadData();
+
+    return id;
+  }
+
+  Future<bool> get isHistoryEmpty async {
+    final history = await getCalculationHistoryFromSelected();
+    return history.isEmpty;
   }
 
   Future<int> deleteHistoryFromSelected() async {
@@ -99,6 +108,8 @@ class CalculatorModel extends BaseModel<SavedCalculator> {
       throw StateError('Save the calculator before adding history.');
     }
 
-    return _calculatorWorker.deleteHistory(calculator.id);
+    int id = await _calculatorWorker.deleteHistory(calculator.id);
+    await loadData();
+    return id;
   }
 }
