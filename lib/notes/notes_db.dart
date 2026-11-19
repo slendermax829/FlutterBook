@@ -107,4 +107,5 @@ class NotesDbWorker extends SqfliteWorker<Note>{
       whereArgs: [entry.id]
     );
   }
+  
 }
