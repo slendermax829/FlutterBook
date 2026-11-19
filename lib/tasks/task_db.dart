@@ -131,7 +131,6 @@ class TaskDBWorker extends SqfliteWorker<TaskList>{
     CREATE TABLE IF NOT EXISTS $tableName (
       list_id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT,
-      description TEXT
     )''';
 
   String get taskRefName => 'task';

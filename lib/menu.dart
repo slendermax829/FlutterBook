@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_book/calculator/calculator_view.dart';
 import 'package:flutter_book/calendar/calendar.dart';
 import 'package:flutter_book/calendar/calendar_view.dart';
 import 'package:flutter_book/notes/note.dart';
@@ -11,7 +12,8 @@ class Menu extends StatelessWidget {
     Tab(icon: Icon(Icons.notes), child: Text('Notes'),),
     Tab(icon: Icon(Icons.calendar_month), child: Text('Calendar')),
     Tab(icon: Icon(Icons.task_rounded), child: Text('Tasks'),),
-    Tab(icon: Icon(Icons.contact_mail), child: Text('Contacts'),)
+    Tab(icon: Icon(Icons.contact_mail), child: Text('Contacts'),),
+    Tab(icon: Icon(Icons.calculate), child: Text('Calculator'),)
   ];
 
   static const List<Widget> _views = [
@@ -19,6 +21,7 @@ class Menu extends StatelessWidget {
     Calendar(),//Center(child: Text('Calendar'),),
     TaskViewer(),
     Center(child: Text('Contacts'),),
+    CalculatorView()
   ];
 
   @override
