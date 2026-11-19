@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_book/calculator/calculator_model.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:http/http.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class CalculatorView extends StatefulWidget {
   const CalculatorView({super.key});
@@ -162,15 +167,34 @@ class _CalculatorViewState extends State<CalculatorView> {
     _scaffoldKey.currentState?.openDrawer();
   }
 
+  void _openSavedCalculators() {
+    _scaffoldKey.currentState?.openEndDrawer();
+  }
+
   void _clearHistory() {
     setState(_history.clear);
   }
 
+  Future<void> _deleteCalculator(SavedCalculator calculator) async {
+    try {
+      await context.read<CalculatorModel>().deleteEntry(calculator);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not delete calculator: $error')),
+      );
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
+    final model = context.watch<CalculatorModel>();
+    final selectedCal = model.selectedCal;
+    
     return Scaffold(
       key: _scaffoldKey,
       drawer: Drawer(
+        shape: BoxBorder.all(color: Colors.white),
         child: SafeArea(
           child: Column(
             children: [
@@ -187,16 +211,52 @@ class _CalculatorViewState extends State<CalculatorView> {
               ),
               const Divider(height: 1),
               Expanded(
-                child: _history.isEmpty
-                    ? const Center(child: Text('No calculations yet'))
+                child: FutureBuilder<List<CalculationHistory>>(
+                  future: model.getCalculationHistoryFromSelected(),
+                  builder: (context, snapshot) {
+                    final history = snapshot.data ?? const <CalculationHistory>[];
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    return history.isEmpty
+                        ? const Center(child: Text('No calculations yet'))
+                        : ListView.builder(
+                            itemCount: history.length,
+                            itemBuilder: (context, index) => ListTile(
+                              title: Text(history[index].toString()),
+                            ),
+                          );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      endDrawer: Drawer(
+        shape: BoxBorder.all(color: Colors.white),
+        child: SafeArea(
+          child: Column(
+            children: [
+              ListTile(
+                title: const Text(
+                  'Your calculators',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text('Swipe to the right to edit or left to delete',style: TextStyle(fontSize: 10),),
+              ),
+              const Divider(height:  1,),
+              Expanded(
+                child: model.entryList.isEmpty
+                    ? const Center(child: Text('No calculators yet\ntry adding one',textAlign: .center,))
                     : ListView.builder(
-                        itemCount: _history.length,
-                        itemBuilder: (context, index) => ListTile(
-                          title: Text(
-                            _history[index],
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        itemCount: model.entriesLength,
+                        itemBuilder: (context, index) {
+                          final cal = model.entryList[index];
+                          return _buildCalPanel(cal);
+                        },
                       ),
               ),
             ],
@@ -209,16 +269,21 @@ class _CalculatorViewState extends State<CalculatorView> {
           tooltip: 'Open history',
           icon: const Icon(Icons.history),
         ),
-        title: const Text('Calculator'),
+        title: Text(selectedCal?.name ?? 'Calculator'),
         actions: [
           IconButton(
-            onPressed: () => debugPrint('Switching new Calculator'),
+            onPressed: _openSavedCalculators,
             tooltip: 'Switch calculator',
             icon: const Icon(Icons.swap_horiz_outlined),
           ),
           IconButton(
-            onPressed: () => debugPrint('Creating new Calculator'),
-            tooltip: 'Create new calculator history',
+            onPressed: () {
+              final now = DateTime.now();
+              final unix = now.millisecondsSinceEpoch;
+
+              model.setEntry(SavedCalculator(dateUnix: unix));
+            },
+            tooltip: 'Create new calculator',
             icon: const Icon(Icons.add),
           ),
         ],
@@ -290,7 +355,7 @@ class _CalculatorViewState extends State<CalculatorView> {
           style: ElevatedButton.styleFrom(
             shape: const StadiumBorder(),
             backgroundColor: isOperatorButton
-                ? Colors.amber.shade700
+                ? Colors.amber.shade900
                 : isUtilityButton
                 ? Colors.grey.shade400
                 : Colors.grey.shade900,
@@ -300,6 +365,56 @@ class _CalculatorViewState extends State<CalculatorView> {
           child: FittedBox(
             child: Text(label, style: const TextStyle(fontSize: 32)),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalPanel(SavedCalculator savedCal){
+    final date = DateFormat.yMMMd().format(savedCal.date ?? DateTime(2099,1,1));
+    return Slidable(
+      key: ValueKey(savedCal.id),
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(), 
+        dismissible: DismissiblePane(
+          onDismissed: () => _deleteCalculator(savedCal),
+        ),
+        children: [
+          SlidableAction(
+            onPressed:(context) {},
+            backgroundColor: Colors.redAccent.withValues(alpha: .3),
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Delete',
+          )
+        ],
+      ),
+
+      startActionPane: ActionPane(
+        motion: const DrawerMotion(), 
+        children: [
+          SlidableAction(
+            flex: 2,
+            onPressed: (context){
+              context.read<CalculatorModel>().setEntry(savedCal);
+            },
+            backgroundColor: Colors.lightGreenAccent.shade400.withValues(alpha: .3),
+            foregroundColor: Colors.white,
+            icon: Icons.edit,
+            label: 'Edit Calculator',
+          )
+        ]
+      ),
+      child: Card(
+        shape: context.read<CalculatorModel>().selectedCal != null ? Border.all(color: Colors.white) : null,
+        color: Colors.blue.withValues(alpha: .25),
+        child: ListTile(
+          leading: Icon(Icons.calculate_sharp),
+          title: Text(savedCal.name ?? 'Unknown'),
+          subtitle: Text(date),
+          onTap: () {
+            context.read<CalculatorModel>().selectedCal = savedCal;
+          },
         ),
       ),
     );

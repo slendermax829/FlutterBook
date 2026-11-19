@@ -28,16 +28,43 @@ class CalculatorModel extends BaseModel<SavedCalculator> {
   final CalculatorDbWorker _calculatorWorker;
   SavedCalculator? _selectedCalculator;
 
-  CalculatorModel._(CalculatorDbWorker worker)
+  CalculatorModel.withWorker(CalculatorDbWorker worker)
     : _calculatorWorker = worker,
       super(worker) {
     worker.createTable().then((_) => loadData());
   }
 
-  factory CalculatorModel() => CalculatorModel._(CalculatorDbWorker());
+  factory CalculatorModel() => CalculatorModel.withWorker(CalculatorDbWorker());
 
-  SavedCalculator get selectedCal => _selectedCalculator!;
-  set selectedCal(SavedCalculator newCal) => _selectedCalculator = newCal;
+  SavedCalculator? get selectedCal => _selectedCalculator;
+  
+  set selectedCal(SavedCalculator? newCal) {
+    _selectedCalculator = newCal;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> deleteEntry(SavedCalculator entry) async {
+    final index = entryList.indexWhere((item) => item.id == entry.id);
+    final selected = _selectedCalculator?.id == entry.id ? _selectedCalculator : null;
+
+    if (index != -1) entryList.removeAt(index);
+    if (selected != null) _selectedCalculator = null;
+    notifyListeners();
+
+    try {
+      await worker.delete(entry);
+    } catch (_) {
+      if (index != -1 && !entryList.any((item) => item.id == entry.id)) {
+        entryList.insert(index < entryList.length ? index : entryList.length, entry);
+      }
+      if (selected != null && _selectedCalculator == null) {
+        _selectedCalculator = selected;
+      }
+      notifyListeners();
+      rethrow;
+    }
+  }
 
   Future<List<CalculationHistory>> getCalculationHistoryFromSelected() async {
     final calculator = _selectedCalculator;
@@ -46,7 +73,7 @@ class CalculatorModel extends BaseModel<SavedCalculator> {
       throw StateError('No calculator is selected.');
     }
 
-    return _calculatorWorker.getCalculationHistory(calculator);
+    return await _calculatorWorker.getCalculationHistory(calculator);
   }
 
   Future<int> insertHistoryToSelected(CalculationHistory entry) async {
