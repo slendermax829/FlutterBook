@@ -2,30 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_book/base_model.dart';
 import 'package:flutter_book/notes/notes_db.dart';
 
-enum NoteType{
-  Content,
-  Audio,
-  Video;
-}
-
 class Note extends Entry with DateMixin{
   String? title;
   String? description;
   Color? color;
-  NoteType type;
   String? content;
-  String? remoteUrl;
-  String? localPath;
 
 
   Note({
     this.title,
     this.description,
     this.color,
-    this.type = .Content,
     this.content,
-    this.remoteUrl,
-    this.localPath,
     int? dateUnix,
     super.id,
   }){

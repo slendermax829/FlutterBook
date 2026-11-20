@@ -260,6 +260,9 @@ abstract class BaseModel<T extends Entry> extends ChangeNotifier{
   }
 
   Future<void> deleteEntry(T entry) async{
+    // Remove synchronously so a dismissed Slidable leaves the tree immediately.
+    entryList.removeWhere((e) => e.id == entry.id);
+    notifyListeners();
     await worker.delete(entry);
     await loadData();
   }

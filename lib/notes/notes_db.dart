@@ -9,6 +9,22 @@ class NotesDbWorker extends SqfliteWorker<Note>{
   Future<void> createTable() async {
     final db = await database;
     await db.execute(sqlTable);
+
+    // Tables created by an older schema lack newer columns; add them in place.
+    final columns = await db.rawQuery('PRAGMA table_info($tableName)');
+    final names = columns.map((c) => c['name']).toSet();
+    if (!names.contains('description')) {
+      await db.execute('ALTER TABLE $tableName ADD COLUMN description TEXT');
+    }
+
+    // Older inserts stored the "new" sentinel id (-1); give that row a real id.
+    await db.execute(
+      'UPDATE $tableName SET id = (SELECT IFNULL(MAX(id), 0) + 1 FROM $tableName) '
+      'WHERE id = ${Entry.noId}',
+    );
+    if(!names.contains('date')){
+      await db.execute('ALTER TABLE $tableName ADD COLUMN date INTEGER');
+    }
   }
 
   @override
@@ -38,9 +54,7 @@ class NotesDbWorker extends SqfliteWorker<Note>{
       title: map['title'],
       description: map['description'],
       color: Color(map['color']),
-      type: NoteType.values.byName(map['type']),
-      remoteUrl: map['remoteUrl'],
-      localPath: map['localPath']
+      content: map['content']
     );
   }
 
@@ -71,9 +85,7 @@ class NotesDbWorker extends SqfliteWorker<Note>{
       title TEXT,
       description TEXT,
       color INTEGER,
-      type TEXT NOT NULL,
-      remoteUrl TEXT,
-      localPath TEXT,
+      content TEXT,
       date INTEGER
     )''';
 
@@ -83,13 +95,11 @@ class NotesDbWorker extends SqfliteWorker<Note>{
   @override
   Map<String, dynamic> toMap(Note note) {
     return <String, dynamic>{
-      'id': note.id,
+      if (!note.isNew) 'id': note.id,
       'title': note.title,
       'description': note.description,
       'color': note.colorInt,
-      'type': note.type.name,
-      'remoteUrl': note.remoteUrl,
-      'localPath': note.localPath,
+      'content': note.content,
       'date' : note.dateInUnix
     };
   }
@@ -100,7 +110,7 @@ class NotesDbWorker extends SqfliteWorker<Note>{
   @override
   Future<void> update(Note entry) async{
     final db = await database;
-    db.update(
+    await db.update(
       tableName,
       toMap(entry),
       where: 'id = ?',

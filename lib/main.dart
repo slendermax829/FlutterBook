@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_book/bookmark/bookmark_model.dart';
 import 'package:flutter_book/calculator/calculator_model.dart';
 import 'package:flutter_book/calendar/calendar_model.dart';
 import 'package:flutter_book/menu.dart';
@@ -24,6 +25,7 @@ void main() async{
         ChangeNotifierProvider(create: (_) => TaskModel()),
         ChangeNotifierProvider(create: (_) => CalendarModel()),
         ChangeNotifierProvider(create: (_) => CalculatorModel()),
+        ChangeNotifierProvider(create: (_) => BookmarkModel())
       ],
       child: MyApp(),
     )
@@ -70,7 +72,7 @@ class MyApp extends StatelessWidget {
           )
         ),
         bottomSheetTheme: BottomSheetThemeData(
-          backgroundColor: Colors.grey.withValues(alpha: .35),
+          backgroundColor: Colors.grey,
         ),
         dialogTheme: DialogThemeData(
           titleTextStyle: TextStyle(color: Colors.white),

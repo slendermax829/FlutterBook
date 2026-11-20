@@ -14,7 +14,7 @@ class NoteView extends StatelessWidget {
         index: model.screen,
         children: [
           NoteList(),
-          NoteEntry()
+          NoteEntry(key: ObjectKey(model.entryBeingEdited),)
         ],
     );
   }

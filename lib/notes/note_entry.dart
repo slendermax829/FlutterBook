@@ -21,8 +21,7 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, Fir
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _contentController = TextEditingController();
-  
-  NoteType? _noteType = NoteType.Content;
+
   Color _selectedColor = Colors.red;
 
   @override
@@ -31,10 +30,9 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, Fir
 
     _titleController.text = note?.title ?? '';
     _descriptionController.text = note?.description ?? '';
-    _noteType = note?.type ?? .Content;
     _selectedColor = note?.color ?? Colors.red;
     _contentController.text = note?.content ?? '';
-    date = note?.date;
+    //date = note?.date;
 
     super.initState();
   }
@@ -62,9 +60,7 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, Fir
               Text('Title: ${_titleController.text}'),
               Text('Description: ${_descriptionController.text}'),
               Text('Date: ${formattedDate ?? 'No Date Selected'}'),
-              _noteType == .Content
-                ? Text('Content: ${_contentController.text}')
-                : Text('${_noteType!.name} File: ${selectedFileName ?? 'No File Selected'}')
+              Text('Content: ${_contentController.text}')
             ],
           ),
           actions: [
@@ -90,45 +86,28 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, Fir
     final model = context.read<NoteModel>();
     final messenger = ScaffoldMessenger.of(context);
     final existing = model.entryBeingEdited;
-    final isFileType = _noteType != NoteType.Content;
 
-    String? remoteUrl;
-    String? localPath;
-    if(isFileType){
-      // Keep the previous upload unless a new file was picked.
-      if(selectedFilePath != null){
-        try{
-          localPath = selectedFilePath;
-          remoteUrl = await uploadFile(
-            localPath!,
-            folder: _noteType!.name.toLowerCase(),
-          );
-        }catch(e){
-          debugPrint('Upload failed: $e');
-          messenger.showSnackBar(
-            const SnackBar(content: Text('File upload failed')),
-          );
-          return;
-        }
-      }else if(existing?.type == _noteType){
-        remoteUrl = existing?.remoteUrl;
-        localPath = existing?.localPath;
-      }
-    }
+    final dateMade = DateTime.now();
 
     model.entryBeingEdited = Note(
       id: existing?.id ?? Entry.noId,
       title: _titleController.text,
       description: _descriptionController.text,
       color: _selectedColor,
-      type: _noteType ?? NoteType.Content,
-      content: _noteType == NoteType.Content ? _contentController.text : null,
-      remoteUrl: remoteUrl,
-      localPath: localPath,
-      dateUnix: dateInUnix,
+      content: _contentController.text,
+      dateUnix: dateMade.millisecondsSinceEpoch,
     );
 
-    resetFile();
+    final editedNote = model.entryBeingEdited;
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: editedNote!.isNew
+                  ? Text('Success: New note created ${editedNote.title}')
+                  : Text('Success: New note updated ${editedNote.title}'),
+      )
+    );
+
     await model.stopEntry(save: true);
   }
 
@@ -203,9 +182,6 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, Fir
                                 return null;
                               },
                             ),
-                            _dateField(),
-                            Divider(color: Colors.white,),
-                            _noteTypeContent(),
                             Divider(color: Colors.white,),
                             _insertContent(),
                             Divider(color: Colors.white,),
@@ -256,133 +232,29 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, Fir
     );
   }
 
-  Widget _dateField(){
-    return ListTile(
-      leading: const Icon(Icons.calendar_today, color: Colors.white),
-      title: Text(
-        formattedDate ?? 'No date selected',
-        style: const TextStyle(color: Colors.white),
-      ),
-      trailing: hasDate
-          ? IconButton(
-              icon: const Icon(Icons.clear, color: Colors.white),
-              onPressed: () => setState(() => date = null),
-            )
-          : null,
-      onTap: () async {
-        final picked = await pickDate(context);
-        if (picked != null && mounted) setState(() {});
-      },
-    );
-  }
-
-  Widget _noteTypeContent(){
-    return SafeArea(
-      child: RadioGroup<NoteType>(
-        groupValue: _noteType,
-        onChanged:(NoteType? type) {
-          setState(() {
-            resetFile();
-            _noteType = type;
-          });
-        }, 
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text('Type',style: TextStyle(fontSize: 24, color: Colors.white, decoration: TextDecoration.underline),),
-            RadioListTile(
-              value: NoteType.Content,
-              title: const Text('Content'),
-            ),
-            RadioListTile(
-              value: NoteType.Audio,
-              title: const Text('Audio'),
-            ),
-            RadioListTile(
-              value: NoteType.Video,
-              title: const Text('Video'),
-            )
-          ],
-        )
-      ),
-    );
-  }
-
   Widget _insertContent(){
-    switch (_noteType ?? .Content){
-      case NoteType.Content:
-        return SizedBox(
-          height: 200,
-          child: TextFormField(
-            expands: true,
-            maxLines: null,
-            minLines: null,
-            controller: _contentController,
-            maxLength: 100,
-            cursorColor: Colors.white,
-            textAlignVertical: TextAlignVertical.top,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              enabledBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.white),
-              ),
-              focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.white),
-              ),
-              icon: Icon(Icons.edit),
-              label: Text('Content'),
-              labelStyle: TextStyle(color: Colors.white),
-            ),
-          ),
-        );
-      case NoteType.Audio:
-        return _buildFileUploader(fileType: .Audio);
-      case NoteType.Video:
-        return _buildFileUploader(fileType: .Video);
-    }
-  }
-
-  Widget _buildFileUploader({required NoteType fileType}){
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      highlightColor: Colors.grey.withValues(alpha: .2),
-      splashColor: Colors.grey.withValues(alpha: .4),
-      onTap: () async {
-        final picked = fileType == .Audio
-            ? await pickAudioFile()
-            : await pickVideoFile();
-        if (picked && mounted) setState(() {});
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Column(
-          spacing: 20,
-          children: [
-            SizedBox(
-              width: .infinity,
-              child: DottedBorder(
-                options: RectDottedBorderOptions(
-                  color: Colors.white,
-                  dashPattern: [6,4],
-                  strokeWidth: 2,
-                  padding: EdgeInsets.all(20),
-                ),
-                child: Center(
-                  child: Column(
-                    spacing: 12,
-                    mainAxisAlignment: .center,
-                    children: [
-                      const Icon(Icons.upload, size: 46,),
-                      fileType == _noteType 
-                        ? Text(selectedFileName ?? 'Upload File Here')
-                        : Text('Upload File Here')
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+    return SizedBox(
+      height: 200,
+      child: TextFormField(
+        expands: true,
+        maxLines: null,
+        minLines: null,
+        controller: _contentController,
+        maxLength: 100,
+        cursorColor: Colors.white,
+        textAlignVertical: TextAlignVertical.top,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+        border: OutlineInputBorder(),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.white),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.white),
+        ),
+        icon: Icon(Icons.edit),
+        label: Text('Content'),
+        labelStyle: TextStyle(color: Colors.white),
         ),
       ),
     );

@@ -134,8 +134,7 @@ class CalculatorDbWorker extends SqfliteWorker<SavedCalculator>
   }
 
   @override
-  String get showSqlTable =>
-      "SELECT name FROM sqlite_master WHERE type='table' AND name=?";
+  String get showSqlTable => "SELECT name FROM sqlite_master WHERE type='table' AND name=?";
 
   @override
   String get tableName => 'saved_calculators';

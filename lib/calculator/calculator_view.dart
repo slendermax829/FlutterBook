@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_book/calculator/calculator_model.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -164,21 +163,17 @@ class _CalculatorViewState extends State<CalculatorView> {
         _inputDecimal();
       case '=':
         _calculate();
-      case '+':
+      case '+': // From Mac Char Picker
       case '−':
-      case '×':
-      case '÷':
-        _chooseOperator(label);
+      case '×': 
+      case '÷': // Cmd + /
+        _chooseOperator(label); // operand buttons go here +-x÷
     }
   }
 
-  void _openHistory() {
-    _scaffoldKey.currentState?.openDrawer();
-  }
+  void _openHistory() => _scaffoldKey.currentState?.openDrawer(); 
 
-  void _openSavedCalculators() {
-    _scaffoldKey.currentState?.openEndDrawer();
-  }
+  void _openSavedCalculators() => _scaffoldKey.currentState?.openEndDrawer();
 
   Future<void> _saveHistory(CalculationHistory history) async {
     final model = context.read<CalculatorModel>();
@@ -213,6 +208,9 @@ class _CalculatorViewState extends State<CalculatorView> {
   Future<void> _deleteCalculator(SavedCalculator calculator) async {
     try {
       await context.read<CalculatorModel>().deleteEntry(calculator);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Deleted calculator: ${calculator.name}')),
+      );
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -305,7 +303,7 @@ class _CalculatorViewState extends State<CalculatorView> {
                         itemCount: model.entriesLength,
                         itemBuilder: (context, index) {
                           final cal = model.entryList[index];
-                          return _buildCalPanel(cal);
+                          return _buildSavedCalculatorPanel(cal);
                         },
                       ),
               ),
@@ -420,7 +418,7 @@ class _CalculatorViewState extends State<CalculatorView> {
     );
   }
 
-  Widget _buildCalPanel(SavedCalculator savedCal){
+  Widget _buildSavedCalculatorPanel(SavedCalculator savedCal){
     final date = DateFormat.yMMMd().format(savedCal.date ?? DateTime(2099,1,1));
     return Slidable(
       key: ValueKey(savedCal.id),
@@ -451,7 +449,7 @@ class _CalculatorViewState extends State<CalculatorView> {
             backgroundColor: Colors.lightGreenAccent.shade400.withValues(alpha: .3),
             foregroundColor: Colors.white,
             icon: Icons.edit,
-            label: 'Edit Calculator',
+            label: 'Edit',
           )
         ]
       ),

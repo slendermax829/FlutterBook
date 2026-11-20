@@ -26,6 +26,12 @@ class _CalculatorEntryState extends State<CalculatorEntry> {
     super.dispose();
   }
 
+  Future<void> _showSuccessMessage(SavedCalculator saved) async{
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Created new Calculator: ${saved.name}')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final model = context.watch<CalculatorModel>();
@@ -89,7 +95,7 @@ class _CalculatorEntryState extends State<CalculatorEntry> {
                           if(_formKey.currentState!.validate()){
                             model.entryBeingEdited
                               ?..name = _nameController.text;
-                              
+                            _showSuccessMessage(model.entryBeingEdited!);
                             model.stopEntry(save: true, notify: true);
                           }
                         },

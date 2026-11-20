@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_book/bookmark/bookmark.dart';
 import 'package:flutter_book/calculator/calculator.dart';
 import 'package:flutter_book/calculator/calculator_view.dart';
 import 'package:flutter_book/calendar/calendar.dart';
@@ -12,16 +13,14 @@ class Menu extends StatelessWidget {
   static const List<Tab> _tabs = [
     Tab(icon: Icon(Icons.notes), child: Text('Notes'),),
     Tab(icon: Icon(Icons.calendar_month), child: Text('Calendar')),
-    Tab(icon: Icon(Icons.task_rounded), child: Text('Tasks'),),
-    Tab(icon: Icon(Icons.contact_mail), child: Text('Contacts'),),
+    Tab(icon: Icon(Icons.bookmark), child: Text('Bookmarks'),),
     Tab(icon: Icon(Icons.calculate), child: Text('Calculator'),)
   ];
 
   static const List<Widget> _views = [
     NoteView(),
     Calendar(),//Center(child: Text('Calendar'),),
-    Center(child: Text('Tasks'),),//TaskViewer(), 
-    Center(child: Text('Contacts'),),
+    Bookmarks(),
     Calculator()
   ];
 
@@ -29,25 +28,27 @@ class Menu extends StatelessWidget {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: _tabs.length, 
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: Text('FlutterBook'),
-          centerTitle: false,
-          actions: [
-            IconButton(
-              onPressed: () => _displayBottomSheet(context), 
-              icon: const Icon(Icons.menu)
-            )
-          ],
-          bottom: const TabBar(
-            labelColor: Colors.blue,
-            indicatorColor: Colors.blue,
-            tabs: _tabs
-            ),
-        ),
-        body: const TabBarView(
-          children: _views
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            title: Text('FlutterBook'),
+            centerTitle: false,
+            actions: [
+              IconButton(
+                onPressed: () => _displayBottomSheet(context), 
+                icon: const Icon(Icons.menu)
+              )
+            ],
+            bottom: const TabBar(
+              labelColor: Colors.blue,
+              indicatorColor: Colors.blue,
+              tabs: _tabs
+              ),
+          ),
+          body: const TabBarView(
+            children: _views
+          ),
         ),
       )
     );
