@@ -77,6 +77,7 @@ class NoteList extends StatelessWidget {
 
     return Slidable(
       key: ValueKey(note.id),
+
       startActionPane: ActionPane(
         motion: DrawerMotion(), 
         children: [

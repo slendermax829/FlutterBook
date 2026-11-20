@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_book/bookmark/bookmark_entry.dart';
 import 'package:flutter_book/bookmark/bookmark_model.dart';
 import 'package:flutter_book/bookmark/bookmark_viewer.dart';
 import 'package:provider/provider.dart';
@@ -13,7 +14,7 @@ class Bookmarks extends StatelessWidget {
       index: model.screen,
       children: [
         BookmarkViewer(),
-        Placeholder()
+        BookmarkEntry(key: ObjectKey(model.entryBeingEdited),)
       ],
     );
   }

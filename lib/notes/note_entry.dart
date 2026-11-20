@@ -108,7 +108,7 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, Fir
       )
     );
 
-    await model.stopEntry(save: true);
+    await model.stopEntry(save: true, notify: true);
   }
 
   @override
