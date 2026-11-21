@@ -4,6 +4,7 @@ import 'package:flutter_book/notes/note_list.dart';
 import 'package:flutter_book/notes/note_model.dart';
 import 'package:provider/provider.dart';
 
+/// Switches between the note list and entry editor.
 class NoteView extends StatelessWidget {
   const NoteView({super.key});
 

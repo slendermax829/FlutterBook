@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_book/calculator/calculator_model.dart';
 import 'package:provider/provider.dart';
 
+/// Form for creating or editing a saved calculator.
 class CalculatorEntry extends StatefulWidget {
   const CalculatorEntry({super.key});
 
@@ -94,7 +95,7 @@ class _CalculatorEntryState extends State<CalculatorEntry> {
                         onPressed: () {
                           if(_formKey.currentState!.validate()){
                             model.entryBeingEdited
-                              ?..name = _nameController.text;
+                              ?.name = _nameController.text;
                             _showSuccessMessage(model.entryBeingEdited!);
                             model.stopEntry(save: true, notify: true);
                           }

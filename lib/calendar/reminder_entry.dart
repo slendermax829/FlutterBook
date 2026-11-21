@@ -4,6 +4,7 @@ import 'package:flutter_book/calendar/calendar_model.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
+/// Form for creating or editing a calendar reminder.
 class ReminderEntry extends StatefulWidget {
   const new({super.key});
 
@@ -41,10 +42,12 @@ class _ReminderEntryState extends State<ReminderEntry> {
     super.dispose();
   }
 
+  /// Get the date only no timestamp included
   DateTime get _reminderDay => DateUtils.dateOnly(
     context.read<CalendarModel>().entryBeingEdited?.date ?? DateTime.now(),
   );
 
+  /// Sub menu to select start time for the start date
   Future<void> _pickStartTime() async {
     final initial = _selectedStartTime ?? DateTime.now();
     final picked = await showTimePicker(
@@ -57,7 +60,7 @@ class _ReminderEntryState extends State<ReminderEntry> {
       _selectedStartTime = DateTime(day.year, day.month, day.day, picked.hour, picked.minute,);
     });
   }
-
+  /// Sub menu to select the end date including time
   Future<void> _pickEndDate() async {
     final day = _reminderDay;
     final picked = await showDatePicker(
@@ -69,7 +72,7 @@ class _ReminderEntryState extends State<ReminderEntry> {
     if (picked == null || !mounted) return;
     setState(() => _selectedEndDate = picked);
   }
-
+  /// Saves the entry being edited and placed into the table in the database
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final model = context.read<CalendarModel>();
@@ -82,7 +85,7 @@ class _ReminderEntryState extends State<ReminderEntry> {
     reminder.date ??= model.selectedDate;
     await model.stopEntry(save: true);
   }
-
+  /// Builds the containers to select the date for the entry
   Widget _pickerRow({
     required IconData icon,
     required String text,

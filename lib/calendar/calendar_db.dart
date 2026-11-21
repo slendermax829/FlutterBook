@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_book/base_model.dart';
 import 'package:flutter_book/calendar/calendar_model.dart';
 
+/// SQLite worker for calendar reminders.
+///
+/// See [SqfliteWorker] for inner functionality
 class CalendarDbWorker extends SqfliteWorker<CalendarReminder> {
   @override
   Future<int> create(CalendarReminder entry) async{

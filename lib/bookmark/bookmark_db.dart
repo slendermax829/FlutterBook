@@ -1,6 +1,9 @@
 import 'package:flutter_book/base_model.dart';
 import 'package:flutter_book/bookmark/bookmark_model.dart';
 
+/// SQLite worker for bookmarks.
+/// 
+/// See [SqfliteWorker] for inner functionality
 class BookmarkDbWorker extends SqfliteWorker<Bookmark>{
   @override
   Future<int> create(Bookmark entry) async{

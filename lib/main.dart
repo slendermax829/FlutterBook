@@ -4,12 +4,12 @@ import 'package:flutter_book/calculator/calculator_model.dart';
 import 'package:flutter_book/calendar/calendar_model.dart';
 import 'package:flutter_book/menu.dart';
 import 'package:flutter_book/notes/note_model.dart';
-import 'package:flutter_book/tasks/task_model.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 
+/// Initializes the app with its section model providers.
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -22,7 +22,6 @@ void main() async{
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NoteModel()),
-        ChangeNotifierProvider(create: (_) => TaskModel()),
         ChangeNotifierProvider(create: (_) => CalendarModel()),
         ChangeNotifierProvider(create: (_) => CalculatorModel()),
         ChangeNotifierProvider(create: (_) => BookmarkModel())
@@ -32,10 +31,10 @@ void main() async{
   );
 }
 
+/// Configures the app's theme and root menu.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

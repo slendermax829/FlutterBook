@@ -5,11 +5,12 @@ import 'package:flutter_book/calculator/calculator_view.dart';
 import 'package:flutter_book/calendar/calendar.dart';
 import 'package:flutter_book/calendar/calendar_view.dart';
 import 'package:flutter_book/notes/note.dart';
-import 'package:flutter_book/tasks/tasks.dart';
 
+/// The app's tabbed sections and tabbed menus.
 class Menu extends StatelessWidget {
   const new({super.key});
 
+  /// The tabs to be present through out the app's lifecycle
   static const List<Tab> _tabs = [
     Tab(icon: Icon(Icons.notes), child: Text('Notes'),),
     Tab(icon: Icon(Icons.calendar_month), child: Text('Calendar')),
@@ -17,9 +18,10 @@ class Menu extends StatelessWidget {
     Tab(icon: Icon(Icons.calculate), child: Text('Calculator'),)
   ];
 
+  /// The views that are associated by the indices from [_tabs]
   static const List<Widget> _views = [
     NoteView(),
-    Calendar(),//Center(child: Text('Calendar'),),
+    Calendar(),
     Bookmarks(),
     Calculator()
   ];
@@ -32,7 +34,7 @@ class Menu extends StatelessWidget {
         child: Scaffold(
           appBar: AppBar(
             automaticallyImplyLeading: false,
-            title: Text('FlutterBook'),
+            title: Text('FlutterBook', style: TextStyle(decoration: TextDecoration.underline),),
             centerTitle: false,
             actions: [
               IconButton(
@@ -67,7 +69,7 @@ void _displayBottomSheet(BuildContext context){
             leading: Icon(Icons.clear),
             title: Text('Clear all Data'),
             onTap: () {
-              debugPrint('Clearing Data');
+              debugPrint('Clearing Data'); // does not have any functionality
               Navigator.pop(context, false);
             },
           )

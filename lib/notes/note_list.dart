@@ -4,10 +4,11 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+/// Displays notes and provides actions for viewing, editing, and deleting them.
 class NoteList extends StatelessWidget {
   NoteList({super.key});
 
-  final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>(); // global key for viewing content of notes
 
   void _viewContent(String noteContent){
     final BuildContext? context = _navKey.currentContext;
@@ -27,6 +28,7 @@ class NoteList extends StatelessWidget {
     }
   }
 
+  /// Deletes the note from selection
   void _deleteNote(Note note){
     final BuildContext? context = _navKey.currentContext;
     
@@ -71,7 +73,7 @@ class NoteList extends StatelessWidget {
       ),
     );
   }
-
+  /// Builds a note slidable panel
   Widget _buildSlidable(Note note){
     final date = DateFormat.yMMMd().format(note.date ?? DateTime(2099,1,1));
 

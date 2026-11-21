@@ -5,9 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// Displays saved bookmarks and their available actions.
 class BookmarkViewer extends StatelessWidget {
   BookmarkViewer({super.key});
-
+  
+  /// Opens the website associated with the bookmark
   Future<void> _openWebSite(String? bookUrl) async{
     if(bookUrl == null) return;
 
@@ -19,11 +21,11 @@ class BookmarkViewer extends StatelessWidget {
       return;
     }
   }
-
+  /// Deletes the specified bookmark entry
   Future<void> _deleteBookmark(Bookmark bookmark, BookmarkModel model, ScaffoldMessengerState messenger) async {
     try {
       await model.deleteEntry(bookmark);
-      if (messenger.mounted) {
+      if (messenger.mounted) { /// kept giving an error that would not successfully delete the entry but dismisses the panel entirely
         messenger.showSnackBar(const SnackBar(content: Text('Deleted Bookmark')));
       }
     } catch (e) {
@@ -31,7 +33,7 @@ class BookmarkViewer extends StatelessWidget {
       try {
         await model.loadData();
       } catch (reloadError) {
-        debugPrint('Error reloading bookmarks: $reloadError');
+        debugPrint('Error reloading bookmarks: $reloadError'); // in case list view won't reload any entires
       }
       if (messenger.mounted) {
         messenger.showSnackBar(SnackBar(content: Text('Error deleting bookmark: $e')));
@@ -70,7 +72,7 @@ class BookmarkViewer extends StatelessWidget {
             )
     );
   }
-
+  /// Builds a slidable panel for each bookmark
   Widget _buildPanel(
     Bookmark bookmark,
     BookmarkModel model,

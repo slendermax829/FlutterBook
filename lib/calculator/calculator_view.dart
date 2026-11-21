@@ -4,6 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+/// Displays the calculator and saved-calculator controls.
 class CalculatorView extends StatefulWidget {
   const CalculatorView({super.key});
 
@@ -12,27 +13,27 @@ class CalculatorView extends StatefulWidget {
 }
 
 class _CalculatorViewState extends State<CalculatorView> {
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
-  final List<String> _history = [];
+  final _scaffoldKey = GlobalKey<ScaffoldState>(); // key for drawer tabs
 
   String _display = '0';
-  double? _storedValue;
-  String? _pendingOperator;
+  double? _storedValue; // whenever the value needs to be stored for calcuation
+  String? _pendingOperator; // operator to calculate the two operands
   bool _startNewNumber = false;
-
+  
+  ///Enters or appends digits to the calcuator displayer
   void _inputDigit(String digit) {
     setState(() {
       if (_display == 'Error' || _startNewNumber) {
-        _display = digit;
+        _display = digit; // resets
         _startNewNumber = false;
       } else if (_display == '0') {
-        _display = digit;
+        _display = digit; //switches from 0
       } else {
-        _display += digit;
+        _display += digit; // appends
       }
     });
   }
-
+  ///Enters a decimal when the decimal button is pressed
   void _inputDecimal() {
     setState(() {
       if (_display == 'Error' || _startNewNumber) {
@@ -44,23 +45,23 @@ class _CalculatorViewState extends State<CalculatorView> {
     });
   }
 
+  /// Sets the operator to be use for calcuation
   void _chooseOperator(String operator) {
     final currentValue = double.tryParse(_display);
     if (currentValue == null) return;
 
     setState(() {
-      if (_storedValue != null &&
-          _pendingOperator != null &&
-          !_startNewNumber) {
-        _applyPendingOperation(currentValue);
+      if (_storedValue != null && _pendingOperator != null && !_startNewNumber) {
+        _applyPendingOperation(currentValue); // applies operator to number that is displayed
       } else {
-        _storedValue = currentValue;
+        _storedValue = currentValue; // stores the value from displayer
       }
       _pendingOperator = operator;
-      _startNewNumber = true;
+      _startNewNumber = true; // displays a new number after operator
     });
   }
-
+  
+  /// Calculates the final result and displays it
   void _calculate() {
     final currentValue = double.tryParse(_display);
     if (_storedValue == null ||
@@ -76,7 +77,7 @@ class _CalculatorViewState extends State<CalculatorView> {
       _startNewNumber = true;
     });
   }
-
+  /// Applies the stored value with operator to make a calculation
   void _applyPendingOperation(double currentValue) {
     final leftValue = _storedValue!;
     final operator = _pendingOperator!;
@@ -84,8 +85,8 @@ class _CalculatorViewState extends State<CalculatorView> {
       '+' => _storedValue! + currentValue,
       '−' => _storedValue! - currentValue,
       '×' => _storedValue! * currentValue,
-      '÷' => currentValue == 0 ? null : _storedValue! / currentValue,
-      _ => null,
+      '÷' => currentValue == 0 ? null : _storedValue! / currentValue, //anything is divided by 0 is a error
+      _ => null, //default is null
     };
 
     _display = result == null ? 'Error' : _formatResult(result);
@@ -99,13 +100,13 @@ class _CalculatorViewState extends State<CalculatorView> {
       expression: '${_formatResult(leftValue)} $operator ${_formatResult(currentValue)} =',
       result: _display,
       operationType: operator
-    );
+    ); // creates a new history 
 
     _saveHistory(history);
 
     _storedValue = result;
   }
-
+  /// Toggles the digit either to negative or positive vice versa
   void _toggleSign() {
     final currentValue = double.tryParse(_display);
     if (currentValue == null || currentValue == 0) return;
@@ -114,7 +115,7 @@ class _CalculatorViewState extends State<CalculatorView> {
       _display = _formatResult(-currentValue);
     });
   }
-
+  /// Changes value to a decimal form of a percentage
   void _applyPercent() {
     final currentValue = double.tryParse(_display);
     if (currentValue == null) return;
@@ -124,7 +125,9 @@ class _CalculatorViewState extends State<CalculatorView> {
       _startNewNumber = true;
     });
   }
-
+  /// Resets the value, stored value, and operator
+  /// 
+  /// Displays 0 at the end
   void _clear() {
     setState(() {
       _display = '0';
@@ -133,22 +136,24 @@ class _CalculatorViewState extends State<CalculatorView> {
       _startNewNumber = false;
     });
   }
-
+  /// Formats the result from the given value
   String _formatResult(double value) {
     if (!value.isFinite) return 'Error';
 
     final rounded = value.toStringAsPrecision(12);
-    if (rounded.contains('e')) return rounded;
-    if (!rounded.contains('.')) return rounded;
+    if (rounded.contains('e')) return rounded; // returns value if 'e' is from the string
+    if (!rounded.contains('.')) return rounded; // returns whenever '.' is present from the string
 
     return rounded
         .replaceFirst(RegExp(r'0+$'), '')
         .replaceFirst(RegExp(r'\.$'), '');
   }
-
+  /// Applies button logic for any button that is pressed
+  /// 
+  /// Calls other functions that are associated with the pressed button
   void _onButtonPressed(String label) {
     if (RegExp(r'^\d$').hasMatch(label)) {
-      _inputDigit(label);
+      _inputDigit(label); // if a digit number is pressed
       return;
     }
 
@@ -163,11 +168,8 @@ class _CalculatorViewState extends State<CalculatorView> {
         _inputDecimal();
       case '=':
         _calculate();
-      case '+': // From Mac Char Picker
-      case '−':
-      case '×': 
-      case '÷': // Cmd + /
-        _chooseOperator(label); // operand buttons go here +-x÷
+      default:
+        _chooseOperator(label); // for operand buttons +-x÷
     }
   }
 
@@ -175,9 +177,12 @@ class _CalculatorViewState extends State<CalculatorView> {
 
   void _openSavedCalculators() => _scaffoldKey.currentState?.openEndDrawer();
 
+  /// Saves the history by creating [CalculationHistory] object a from the calcuation
+  /// 
+  /// Stores the object to the database
   Future<void> _saveHistory(CalculationHistory history) async {
     final model = context.read<CalculatorModel>();
-    if (model.selectedCal == null) {
+    if (model.selectedCal == null) { // if no calcuator is selected
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Select a calculator to save history.')),
       );
@@ -194,6 +199,7 @@ class _CalculatorViewState extends State<CalculatorView> {
     }
   }
 
+  /// Clears the history from the selected calcuator
   Future<void> _clearHistory(CalculatorModel model) async {
     try {
       await model.deleteHistoryFromSelected();
@@ -205,6 +211,9 @@ class _CalculatorViewState extends State<CalculatorView> {
     }
   }
 
+  /// Deletes the calculator from the model entry list
+  /// 
+  /// It also erases its calcuation history associated with it
   Future<void> _deleteCalculator(SavedCalculator calculator) async {
     try {
       await context.read<CalculatorModel>().deleteEntry(calculator);
@@ -381,7 +390,7 @@ class _CalculatorViewState extends State<CalculatorView> {
       ),
     );
   }
-
+  /// Builds a row of buttons by calling [_buildButtonSlot] from the length of [labels]
   Widget _buildRow(List<String> labels) {
     return Expanded(
       child: Row(
@@ -390,6 +399,7 @@ class _CalculatorViewState extends State<CalculatorView> {
     );
   }
 
+  /// Builds a button widget and assigns an operation depending if its a utility button or operator
   Widget _buildButtonSlot(String label, {int flex = 1}) {
     final isUtilityButton = label == 'AC' || label == '+/−' || label == '%';
     final isOperatorButton = const {'÷', '×', '−', '+', '='}.contains(label);
@@ -417,7 +427,7 @@ class _CalculatorViewState extends State<CalculatorView> {
       ),
     );
   }
-
+  /// Builds a saved slidable calculator panel
   Widget _buildSavedCalculatorPanel(SavedCalculator savedCal){
     final date = DateFormat.yMMMd().format(savedCal.date ?? DateTime(2099,1,1));
     return Slidable(

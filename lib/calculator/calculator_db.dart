@@ -1,9 +1,12 @@
 import 'package:flutter_book/base_model.dart';
 import 'package:flutter_book/calculator/calculator_model.dart';
 
+/// SQLite operations for calculation history belonging to saved calculators.
 mixin CalHistoryHelper on SqfliteWorker<SavedCalculator> {
+  /// Name of the calculation history table.
   String get refTableName => 'calculation_history';
 
+  /// SQL used to create the calculation history table.
   String get refsqlTable =>
       '''
   CREATE TABLE IF NOT EXISTS $refTableName (
@@ -16,6 +19,7 @@ mixin CalHistoryHelper on SqfliteWorker<SavedCalculator> {
       ON DELETE CASCADE
   )''';
 
+  /// Converts [entry] to row values associated with [calculatorId].
   Map<String, dynamic> mapHistory(int calculatorId, CalculationHistory entry) {
     return <String, dynamic>{
       'cal_id': calculatorId, // parent id must match with child id
@@ -25,6 +29,9 @@ mixin CalHistoryHelper on SqfliteWorker<SavedCalculator> {
     };
   }
 
+  /// Inserts a history entry and returns its row ID.
+  ///
+  /// Throws [ArgumentError] if [calculatorId] is the unsaved sentinel.
   Future<int> createHistory(int calculatorId, CalculationHistory entry) async {
     if (calculatorId == Entry.noId) {
       throw ArgumentError.value(
@@ -38,6 +45,7 @@ mixin CalHistoryHelper on SqfliteWorker<SavedCalculator> {
     return db.insert(refTableName, mapHistory(calculatorId, entry));
   }
 
+  /// Constructs a history entry from a database row.
   CalculationHistory getHistory(Map<String, dynamic> map) {
     return CalculationHistory(
       id: map['calculation_id'] as int,
@@ -48,6 +56,9 @@ mixin CalHistoryHelper on SqfliteWorker<SavedCalculator> {
     );
   }
 
+  /// Deletes a calculator's history and returns the number of rows deleted.
+  ///
+  /// Throws [ArgumentError] if [calculatorId] is the unsaved sentinel.
   Future<int> deleteHistory(int calculatorId) async{
     if (calculatorId == Entry.noId) {
       throw ArgumentError.value(
@@ -65,6 +76,7 @@ mixin CalHistoryHelper on SqfliteWorker<SavedCalculator> {
     );
   }
 
+  /// Returns [entry]'s history in descending row-ID order.
   Future<List<CalculationHistory>> getCalculationHistory(
     SavedCalculator entry,
   ) async {
@@ -80,6 +92,11 @@ mixin CalHistoryHelper on SqfliteWorker<SavedCalculator> {
   }
 }
 
+/// SQLite worker for saved calculators and their history.
+/// 
+/// See [SqfliteWorker] for inner functionality
+/// 
+/// See [CalHistoryHelper] for foreign table sql data
 class CalculatorDbWorker extends SqfliteWorker<SavedCalculator>
     with CalHistoryHelper {
   @override

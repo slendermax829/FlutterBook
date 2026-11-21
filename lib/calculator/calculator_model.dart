@@ -1,6 +1,7 @@
 import 'package:flutter_book/base_model.dart';
 import 'package:flutter_book/calculator/calculator_db.dart';
 
+/// A saved calculation and its associated calculator identifier.
 class CalculationHistory extends Entry {
   String? expression;
   String? result;
@@ -16,6 +17,7 @@ class CalculationHistory extends Entry {
   });
 }
 
+/// A named calculator that can have a history of calculations.
 class SavedCalculator extends Entry with DateMixin {
   String? name;
 
@@ -24,20 +26,25 @@ class SavedCalculator extends Entry with DateMixin {
   }
 }
 
+/// Manages saved calculators, selection, and calculation history.
 class CalculatorModel extends BaseModel<SavedCalculator> {
-  final CalculatorDbWorker _calculatorWorker;
+  final CalculatorDbWorker _calculatorWorker; // A another db worker that helps with CalculationHistory entries since it has its own properties
   SavedCalculator? _selectedCalculator;
 
+  /// Creates a model using the supplied SQLite worker.
   CalculatorModel.withWorker(CalculatorDbWorker worker)
-    : _calculatorWorker = worker,
+    : _calculatorWorker = worker, // Calcuation history foreign/child table
       super(worker) {
-    worker.createTable().then((_) => loadData());
+    worker.createTable().then((_) => loadData()); // same thing with parent table buts with the child table
   }
 
+  /// Creates a model using the default calculator worker.
   factory CalculatorModel() => CalculatorModel.withWorker(CalculatorDbWorker());
 
+  /// The currently selected calculator, if any.
   SavedCalculator? get selectedCal => _selectedCalculator;
   
+  /// Changes the selected calculator and notifies listeners.
   set selectedCal(SavedCalculator? newCal) {
     _selectedCalculator = newCal;
     notifyListeners();
@@ -49,11 +56,11 @@ class CalculatorModel extends BaseModel<SavedCalculator> {
     final selected = _selectedCalculator?.id == entry.id ? _selectedCalculator : null;
 
     if (index != -1) entryList.removeAt(index);
-    if (selected != null) _selectedCalculator = null;
+    if (selected != null) _selectedCalculator = null; // changes selected calculator to null if it equals to the one being deleted
     notifyListeners();
 
     try {
-      await worker.delete(entry);
+      await worker.delete(entry); 
     } catch (_) {
       if (index != -1 && !entryList.any((item) => item.id == entry.id)) {
         entryList.insert(index < entryList.length ? index : entryList.length, entry);
@@ -66,6 +73,9 @@ class CalculatorModel extends BaseModel<SavedCalculator> {
     }
   }
 
+  /// Returns the selected calculator's history, newest first.
+  ///
+  /// Throws [StateError] when no calculator is selected.
   Future<List<CalculationHistory>> getCalculationHistoryFromSelected() async {
     final calculator = _selectedCalculator;
 
@@ -76,6 +86,9 @@ class CalculatorModel extends BaseModel<SavedCalculator> {
     return await _calculatorWorker.getCalculationHistory(calculator);
   }
 
+  /// Adds history to the selected saved calculator and returns its row ID.
+  ///
+  /// Throws [StateError] if no calculator is selected or it has not been saved.
   Future<int> insertHistoryToSelected(CalculationHistory entry) async {
     final calculator = _selectedCalculator;
 
@@ -93,11 +106,17 @@ class CalculatorModel extends BaseModel<SavedCalculator> {
     return id;
   }
 
+  /// Whether the selected calculator has no history.
+  ///
+  /// Throws [StateError] when no calculator is selected.
   Future<bool> get isHistoryEmpty async {
     final history = await getCalculationHistoryFromSelected();
     return history.isEmpty;
   }
 
+  /// Deletes the selected calculator's history and returns the number deleted.
+  ///
+  /// Throws [StateError] if no calculator is selected or it has not been saved.
   Future<int> deleteHistoryFromSelected() async {
     final calculator = _selectedCalculator;
 

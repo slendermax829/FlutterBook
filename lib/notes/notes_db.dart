@@ -3,6 +3,9 @@ import 'package:flutter_book/base_model.dart';
 import 'package:flutter_book/notes/note_model.dart';
 import 'package:sqflite/sqflite.dart';
 
+/// SQLite worker for notes.
+/// 
+/// See [SqfliteWorker] for inner functionality
 class NotesDbWorker extends SqfliteWorker<Note>{
 
   @override
@@ -14,7 +17,7 @@ class NotesDbWorker extends SqfliteWorker<Note>{
     final columns = await db.rawQuery('PRAGMA table_info($tableName)');
     final names = columns.map((c) => c['name']).toSet();
     if (!names.contains('description')) {
-      await db.execute('ALTER TABLE $tableName ADD COLUMN description TEXT');
+      await db.execute('ALTER TABLE $tableName ADD COLUMN description TEXT'); // Because it kept giving problems resulting in exceptions
     }
 
     // Older inserts stored the "new" sentinel id (-1); give that row a real id.
@@ -23,7 +26,7 @@ class NotesDbWorker extends SqfliteWorker<Note>{
       'WHERE id = ${Entry.noId}',
     );
     if(!names.contains('date')){
-      await db.execute('ALTER TABLE $tableName ADD COLUMN date INTEGER');
+      await db.execute('ALTER TABLE $tableName ADD COLUMN date INTEGER'); // Because it kept giving problems resulting in exceptions
     }
   }
 

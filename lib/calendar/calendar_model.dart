@@ -24,27 +24,32 @@ class CalendarReminder extends Entry with DateMixin{
   }){
     date = reminderDate;
   }
-
+  /// Gets the instance's color 32 bit integer value
   int get colorInt => (color ?? Colors.red).toARGB32();
 }
 
+/// Manages reminders and the calendar's selected day.
 class CalendarModel extends BaseModel<CalendarReminder>{
-  DateTime _selectedDate = DateUtils.dateOnly(DateTime.now());
+  DateTime _selectedDate = DateUtils.dateOnly(DateTime.now()); // defaults to today whenever app is launched
 
   CalendarModel():super(CalendarDbWorker()){
     worker.createTable().then((_) => loadData());
   }
 
+  /// Gets the selected day from [_selectedDate]
   DateTime get selectedDate => _selectedDate;
 
+  /// Reminders whose dates fall on the selected day.
   List<CalendarReminder> get remindersForSelectedDate => remindersOn(_selectedDate);
 
+  /// Returns loaded reminders whose dates fall on the selected [day].
   List<CalendarReminder> remindersOn(DateTime day){
     return entryList
       .where((r) => r.date != null && DateUtils.isSameDay(r.date, day))
       .toList();
   }
 
+  /// Selects and sets the calendar day and notifies listeners.
   void selectDate(DateTime day){
     _selectedDate = DateUtils.dateOnly(day);
     notifyListeners();

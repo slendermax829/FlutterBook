@@ -3,6 +3,7 @@ import 'package:flutter_book/bookmark/bookmark_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
+/// Form for creating or editing a bookmark.
 class BookmarkEntry extends StatefulWidget {
   const BookmarkEntry({super.key});
 
@@ -11,6 +12,7 @@ class BookmarkEntry extends StatefulWidget {
 }
 
 class _BookmarkEntryState extends State<BookmarkEntry> {
+  /// Boolean variable to check if link is valid or not
   bool _isCheckingURL = false;
 
   final _formKey = GlobalKey<FormState>();
@@ -38,7 +40,8 @@ class _BookmarkEntryState extends State<BookmarkEntry> {
     _urlController.dispose();
     super.dispose();
   }
-
+  
+  /// Validates if the url link is true or not
   Future<bool> _validateURL() async {
     setState(() => _isCheckingURL = true,);
 
@@ -76,6 +79,9 @@ class _BookmarkEntryState extends State<BookmarkEntry> {
     }
   }
 
+  /// Inner functionally to save bookmark
+  /// 
+  /// Will be called if and only if [_validateURL] is `true`
   void _saveBookmark() async{
     if(!await _validateURL()) return;
     if (!mounted) return;

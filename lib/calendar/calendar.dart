@@ -4,6 +4,7 @@ import 'package:flutter_book/calendar/calendar_view.dart';
 import 'package:flutter_book/calendar/reminder_entry.dart';
 import 'package:provider/provider.dart';
 
+/// Switches between the calendar and reminder editor.
 class Calendar extends StatelessWidget {
   const new({super.key});
 

@@ -1,14 +1,10 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:dotted_border/dotted_border.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_book/base_model.dart';
 import 'package:flutter_book/notes/note_model.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
 
+/// Form for creating or editing a note.
 class NoteEntry extends StatefulWidget {
   const NoteEntry({super.key});
 
@@ -43,7 +39,7 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, Fir
     _descriptionController.dispose();
     super.dispose();
   }
-
+  /// Displays a confirmation message to the user before saving the note
   void _confirmSave() async{
     final confirm = await showDialog<bool>(
       context: context, 
@@ -81,7 +77,7 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, Fir
       _saveNote();
     }
   }
-
+  /// Saves the note and uploads it's contents to its associated table in the database
   Future<void> _saveNote() async{
     final model = context.read<NoteModel>();
     final messenger = ScaffoldMessenger.of(context);
@@ -231,7 +227,8 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, Fir
       ),
     );
   }
-
+  
+  /// Creates a content box for the user to fill out.
   Widget _insertContent(){
     return SizedBox(
       height: 200,

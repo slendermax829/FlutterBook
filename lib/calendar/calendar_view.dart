@@ -5,14 +5,17 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
+/// Adds reminder completion handling to the calendar model.
 extension Completion on CalendarModel{
+  /// Toggles a reminder's completion state, persists it, and reloads reminders.
   void toggleCompleted(CalendarReminder remider) async{
     remider.isCompleted = !remider.isCompleted;
     await worker.update(remider);
-    await loadData();
+    await loadData(); //resets ui view and loads new data
   }
 }
 
+/// Displays the calendar and reminders for its selected day.
 class CalendarViewer extends StatefulWidget {
   const new({super.key});
 
@@ -21,6 +24,7 @@ class CalendarViewer extends StatefulWidget {
 }
 
 class _CalendarViewerState extends State<CalendarViewer> {
+  /// The controller for the calendar
   final _calendarController = CalendarController();
 
   String dateFormat(DateTime date) => DateFormat.yMMMd().format(date);
@@ -28,7 +32,7 @@ class _CalendarViewerState extends State<CalendarViewer> {
   @override
   void initState() {
     super.initState();
-    final selected = context.read<CalendarModel>().selectedDate;
+    final selected = context.read<CalendarModel>().selectedDate; // defaults for today upon initialization
 
     _calendarController.displayDate = selected;
     _calendarController.selectedDate = selected;
@@ -87,10 +91,13 @@ class _CalendarViewerState extends State<CalendarViewer> {
       ],
     );
   }
-
+  
+  /// Builds bottom panel for reminders based on the day selected from the calendar
+  /// 
+  /// Panels are displayed for each day the reminder is set for
   Widget _remindersPanel() {
     final model = context.watch<CalendarModel>();
-    final reminders = model.remindersForSelectedDate;
+    final reminders = model.remindersForSelectedDate; // gets reminders for selected date
 
     return Material(
       color: Colors.grey.withValues(alpha: .2),
@@ -123,7 +130,7 @@ class _CalendarViewerState extends State<CalendarViewer> {
       ),
     );
   }
-
+  /// Builds slidable panel for each reminder
   Widget _buildSlideableCard(CalendarReminder reminder){
     final model = context.read<CalendarModel>();
     return Slidable(

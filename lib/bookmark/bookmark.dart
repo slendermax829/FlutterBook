@@ -4,6 +4,7 @@ import 'package:flutter_book/bookmark/bookmark_model.dart';
 import 'package:flutter_book/bookmark/bookmark_viewer.dart';
 import 'package:provider/provider.dart';
 
+/// Switches between the bookmark list and entry editor.
 class Bookmarks extends StatelessWidget {
   const new({super.key});
 
