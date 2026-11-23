@@ -138,7 +138,12 @@ class _CalendarViewerState extends State<CalendarViewer> {
       startActionPane: ActionPane(
         motion: const ScrollMotion(),
         dismissible: DismissiblePane(
-          onDismissed: () => model.deleteEntry(reminder),
+          onDismissed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Deleted reminder: ${reminder.title}'))
+            );
+            model.deleteEntry(reminder);
+          },
         ),
         children: [
           SlidableAction(

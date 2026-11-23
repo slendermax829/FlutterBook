@@ -36,12 +36,6 @@ class Menu extends StatelessWidget {
             automaticallyImplyLeading: false,
             title: Text('FlutterBook', style: TextStyle(decoration: TextDecoration.underline),),
             centerTitle: false,
-            actions: [
-              IconButton(
-                onPressed: () => _displayBottomSheet(context), 
-                icon: const Icon(Icons.menu)
-              )
-            ],
             bottom: const TabBar(
               labelColor: Colors.blue,
               indicatorColor: Colors.blue,
@@ -55,27 +49,4 @@ class Menu extends StatelessWidget {
       )
     );
   }
-}
-
-void _displayBottomSheet(BuildContext context){
-  final confirm = showModalBottomSheet<bool>(
-    context: context, 
-    builder:(context){
-      return SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-            leading: Icon(Icons.clear),
-            title: Text('Clear all Data'),
-            onTap: () {
-              debugPrint('Clearing Data'); // does not have any functionality
-              Navigator.pop(context, false);
-            },
-          )
-          ],
-        ),
-      );
-    },
-  );
 }

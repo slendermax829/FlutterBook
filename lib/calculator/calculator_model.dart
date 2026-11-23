@@ -55,7 +55,7 @@ class CalculatorModel extends BaseModel<SavedCalculator> {
     final index = entryList.indexWhere((item) => item.id == entry.id);
     final selected = _selectedCalculator?.id == entry.id ? _selectedCalculator : null;
 
-    if (index != -1) entryList.removeAt(index);
+    if (index != -1) entryList.removeAt(index); // remove from list for safe handling
     if (selected != null) _selectedCalculator = null; // changes selected calculator to null if it equals to the one being deleted
     notifyListeners();
 

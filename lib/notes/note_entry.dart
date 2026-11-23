@@ -12,7 +12,7 @@ class NoteEntry extends StatefulWidget {
   State<NoteEntry> createState() => _NoteEntryState();
 }
 
-class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, FireBaseUploader {
+class _NoteEntryState extends State<NoteEntry> with DateMixin{
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -206,7 +206,6 @@ class _NoteEntryState extends State<NoteEntry> with FileUploader, DateMixin, Fir
               children: [
                 TextButton(
                   onPressed: () {
-                    resetFile();
                     model.stopEntry(save: false, notify: true);
                   },
                   child: const Text('Cancel'),

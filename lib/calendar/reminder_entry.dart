@@ -74,16 +74,31 @@ class _ReminderEntryState extends State<ReminderEntry> {
   }
   /// Saves the entry being edited and placed into the table in the database
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
-    final model = context.read<CalendarModel>();
-    final reminder = model.entryBeingEdited!
-      ..title = _titleController.text
-      ..notes = _noteController.text
-      ..color = _selectedColor
-      ..startTime = _selectedStartTime
-      ..endDate = _selectedEndDate;
-    reminder.date ??= model.selectedDate;
-    await model.stopEntry(save: true);
+    try {
+      if (!_formKey.currentState!.validate()) return;
+      final model = context.read<CalendarModel>();
+      final reminder = model.entryBeingEdited!
+        ..title = _titleController.text
+        ..notes = _noteController.text
+        ..color = _selectedColor
+        ..startTime = _selectedStartTime
+        ..endDate = _selectedEndDate;
+      reminder.date ??= model.selectedDate;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Successfully saved reminder: ${reminder.title}'),
+        )
+      );
+
+      await model.stopEntry(save: true);
+    }catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving reminder: $e'),
+        )
+      );
+    }
   }
   /// Builds the containers to select the date for the entry
   Widget _pickerRow({

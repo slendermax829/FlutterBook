@@ -340,7 +340,7 @@ class _CalculatorViewState extends State<CalculatorView> {
 
               model.setEntry(SavedCalculator(dateUnix: unix));
             },
-            tooltip: 'Create new calculator',
+            tooltip: 'Create a new calculator',
             icon: const Icon(Icons.add),
           ),
         ],
